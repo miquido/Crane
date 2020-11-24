@@ -7,7 +7,7 @@ public struct NetworkRequest<Variable, Response, Fault: NetworkError> {
     @escaping (Result<Response, Fault>) -> Void
   ) -> CancelationToken
   
-  @usableFromInline internal init(
+  public init(
     _ execute: @escaping (
       Variable,
       CancelationToken,
