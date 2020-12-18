@@ -32,7 +32,10 @@ extension String: URLPathComponent {
     String(
       description
         .split(separator: "/")
-        .reduce(into: "", { $0.append("/\($1)") })
+        .reduce(
+          into: "",
+          { $0.append("/\($1.percentEncodedPathComponent)") }
+        )
         .drop(while: { $0 == "/"}) // removes leading '/' characters
     )
   }
@@ -43,7 +46,18 @@ extension Substring: URLPathComponent {
     String(
       description
         .split(separator: "/")
-        .reduce(into: "", { $0.append("/\($1)") })
+        .reduce(
+          into: "",
+          {
+            guard
+              let percentEncodedPathComponent = $1
+              .addingPercentEncoding(
+                withAllowedCharacters: urlPathComponentAllowedCharacterSet
+              )
+            else { fatalError("Failed to encode URLPath component") }
+            $0.append("/\(percentEncodedPathComponent)")
+          }
+        )
         .drop(while: { $0 == "/"}) // removes leading '/' characters
     )
   }
