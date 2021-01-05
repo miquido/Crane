@@ -89,3 +89,14 @@ public extension HTTPRequest {
     set { urlComponents.percentEncodedQuery = newValue.percentEncodedString }
   }
 }
+
+extension HTTPRequest: CustomStringConvertible {
+  
+  public var description: String {
+    """
+    \(method.rawValue) \(path.percentEncodedString)\(urlQuery.percentEncodedString.map { "?\($0)" } ?? "") HTTP/1.1\r
+    \(headers.description)\r
+    \(String(data: body.rawValue, encoding: .utf8) ?? "")
+    """
+  }
+}

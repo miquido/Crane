@@ -4,6 +4,10 @@ import struct Foundation.Data
 public struct NetworkResponseDecoding<Variable, Response, Failure: NetworkError> {
   
   public var decode: (HTTPResponse, Variable) -> Result<Response, Failure>
+  
+  public init(decode: @escaping (HTTPResponse, Variable) -> Result<Response, Failure>) {
+    self.decode = decode
+  }
 }
 
 public extension NetworkResponseDecoding {
@@ -61,17 +65,13 @@ public extension NetworkResponseDecoding where Response == String {
 
 public extension NetworkResponseDecoding where Response: Decodable {
   
-  static var json: Self {
+  static func json(using decoder: JSONDecoder = JSONDecoder()) -> Self {
     Self { response, _ in
-      guard case 200..<300 = response.statusCode
-      else { return .failure(.decodingFailed(nil)) }
       do {
-        return .success(try jsonDecoder.decode(Response.self, from: response.body.rawValue))
+        return .success(try decoder.decode(Response.self, from: response.body.rawValue))
       } catch {
         return .failure(.decodingFailed(error))
       }
     }
   }
 }
-
-private let jsonDecoder = JSONDecoder()

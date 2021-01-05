@@ -67,10 +67,14 @@ public extension HTTPRequestExecutor {
           case NSURLErrorTimedOut:
             completion(.failure(.timeout))
           case _: // TODO: fill with more known errors
-            completion(.failure(.other(error)))
+            withExtendedLifetime(error) { // temporary workaround for some ARC issues
+              completion(.failure(.other($0)))
+            }
           }
         } else if let response = response.flatMap({ HTTPResponse(from: $0, body: data) }) {
-          completion(.success(response))
+          withExtendedLifetime(response) { // temporary workaround for some ARC issues
+            completion(.success($0))
+          }
         } else {
           completion(.failure(.invalidResponse))
         }

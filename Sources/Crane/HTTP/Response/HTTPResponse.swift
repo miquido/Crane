@@ -52,3 +52,14 @@ public extension HTTPResponse {
     )
   }
 }
+
+extension HTTPResponse: CustomStringConvertible {
+  
+  public var description: String {
+    """
+    HTTP/1.1 \(statusCode.rawValue)\r
+    \(headers.description)\r
+    \(String(data: body.rawValue, encoding: .utf8) ?? "")
+    """
+  }
+}

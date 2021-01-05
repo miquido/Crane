@@ -3,6 +3,10 @@ import struct Foundation.URL
 public struct NetworkRequestEncoding<Variable, Failure: NetworkError> {
   
   public var encode: (Variable) -> Result<HTTPRequest, Failure>
+  
+  public init(_ encode: @escaping (Variable) -> Result<HTTPRequest, Failure>) {
+    self.encode = encode
+  }
 }
 
 public extension NetworkRequestEncoding {

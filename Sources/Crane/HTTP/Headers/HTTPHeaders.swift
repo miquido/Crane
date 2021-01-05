@@ -96,5 +96,9 @@ extension HTTPHeaders: ExpressibleByDictionaryLiteral {
 
 extension HTTPHeaders: CustomStringConvertible {
   
-  public var description: String { dictionary.description }
+  public var description: String {
+    dictionary.reduce(into: "") { result, header in
+      result += "\(header.key.rawValue): \(header.value.httpHeaderValue)\r\n"
+    }
+  }
 }
