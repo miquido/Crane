@@ -68,13 +68,13 @@ public extension HTTPRequestExecutor {
             completion(.failure(.timeout))
           case _: // TODO: fill with more known errors
             withExtendedLifetime(error) { // temporary workaround for some ARC issues
-              completion(.failure(.other($0)))
+              completion(.failure(.other(error)))
             }
           }
         } else if let response = response.flatMap({ HTTPResponse(from: $0, body: data) }) {
-          withExtendedLifetime(response) { // temporary workaround for some ARC issues
-            completion(.success($0))
-          }
+//          withExtendedLifetime(response) { // temporary workaround for some ARC issues
+            completion(.success(response))
+//          }
         } else {
           completion(.failure(.invalidResponse))
         }

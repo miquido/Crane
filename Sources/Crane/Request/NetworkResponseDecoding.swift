@@ -25,7 +25,7 @@ public extension NetworkResponseDecoding where Response == Void {
   static var empty: Self {
     Self { response, _ in
       guard case 200..<300 = response.statusCode
-      else { return .failure(.decodingFailed(nil)) }
+      else { return .failure(.fromResponseDecodingFailure(reason: nil)) }
       return .success(())
     }
   }
@@ -56,7 +56,7 @@ public extension NetworkResponseDecoding where Response == String {
   ) -> Self {
     Self { response, _ in
       guard let string = String(data: response.body.rawValue, encoding: encoding)
-      else { return .failure(.decodingFailed(nil)) }
+      else { return .failure(.fromResponseDecodingFailure(reason: nil)) }
       return .success(string)
     }
   }
@@ -70,7 +70,7 @@ public extension NetworkResponseDecoding where Response: Decodable {
       do {
         return .success(try decoder.decode(Response.self, from: response.body.rawValue))
       } catch {
-        return .failure(.decodingFailed(error))
+        return .failure(.fromResponseDecodingFailure(reason: error))
       }
     }
   }

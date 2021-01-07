@@ -34,7 +34,7 @@ public extension NetworkRequestEncoding where Variable: Encodable {
           body: try .json(from: variables)
         )
       }
-      .mapError(Failure.encodingFailed)
+      .mapError(Failure.fromRequestEncodingFailure)
     }
   }
 }
@@ -47,7 +47,7 @@ public extension NetworkRequestEncoding {
   
   static func template(_ template: NetworkRequestTemplate<Variable>) -> Self {
     Self { variable in
-      template.request(with: variable).mapError(Failure.encodingFailed)
+      template.request(with: variable).mapError(Failure.fromRequestEncodingFailure)
     }
   }
 }

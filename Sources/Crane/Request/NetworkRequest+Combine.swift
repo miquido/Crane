@@ -38,6 +38,7 @@ extension NetworkRequest {
           _ = self.target.receive(.failure(.canceled))
           return self.target.receive(completion: .finished)
         }
+        
         switch result {
         case let .success(response):
           _ = self.target.receive(.success(response))

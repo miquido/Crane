@@ -61,13 +61,11 @@ public extension NetworkRequest {
       switch encoding(variable) {
       case let .success(httpRequest):
         return session.requestExecutor(execute: httpRequest, cancelation: cancelation) { result in
-          withExtendedLifetime(result) { // temporary workaround for some ARC issues
-            switch $0 {
-            case let .success(httpResponse):
-              completion(decoding(from: httpResponse, with: variable))
-            case let .failure(error):
-              completion(.failure(.httpError(error)))
-            }
+          switch result {
+          case let .success(httpResponse):
+            completion(decoding(from: httpResponse, with: variable))
+          case let .failure(error):
+            completion(.failure(.fromHTTPError(error)))
           }
         }
       case let .failure(error):
