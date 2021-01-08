@@ -8,7 +8,7 @@ public extension NetworkRequest {
         completion: { result in
           executor(cancelation: cancelation) { cancelation in
             guard !cancelation.isCanceled
-            else { return completion(.failure(.canceled)) }
+            else { return completion(.failure(.canceled())) }
             completion(result)
           }
         }

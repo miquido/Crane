@@ -5,7 +5,7 @@ import Combine
 extension NetworkRequest {
   
   internal final class Subscription<Target: Subscriber>: Combine.Subscription
-  where Target.Failure == Never, Target.Input == Result<Response, Fault> {
+  where Target.Failure == Never, Target.Input == Result<Response, NetworkError> {
     
     private let request: NetworkRequest
     private let variable: Variable
@@ -27,7 +27,7 @@ extension NetworkRequest {
     internal func request(_ demand: Subscribers.Demand) {
       guard !cancelation.isCanceled
       else {
-        _ = self.target.receive(.failure(.canceled))
+        _ = self.target.receive(.failure(.canceled()))
         return self.target.receive(completion: .finished)
       }
       request(variable, cancelation: cancelation) { [weak self] result in
@@ -35,7 +35,7 @@ extension NetworkRequest {
         else { return }
         guard !self.cancelation.isCanceled
         else {
-          _ = self.target.receive(.failure(.canceled))
+          _ = self.target.receive(.failure(.canceled()))
           return self.target.receive(completion: .finished)
         }
         
@@ -60,7 +60,7 @@ extension NetworkRequest {
   
   public struct Publisher: Combine.Publisher {
     
-    public typealias Output = Result<Response, Fault>
+    public typealias Output = Result<Response, NetworkError>
     public typealias Failure = Never
 
     internal let request: NetworkRequest

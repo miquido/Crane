@@ -1,10 +1,10 @@
 import struct Foundation.URL
 
-public struct NetworkRequestEncoding<Variable, Failure: NetworkError> {
+public struct NetworkRequestEncoding<Variable> {
   
-  public var encode: (Variable) -> Result<HTTPRequest, Failure>
+  public var encode: (Variable) -> Result<HTTPRequest, NetworkError>
   
-  public init(_ encode: @escaping (Variable) -> Result<HTTPRequest, Failure>) {
+  public init(_ encode: @escaping (Variable) -> Result<HTTPRequest, NetworkError>) {
     self.encode = encode
   }
 }
@@ -13,7 +13,7 @@ public extension NetworkRequestEncoding {
   
   func callAsFunction(
     _ variable: Variable
-  ) -> Result<HTTPRequest, Failure> {
+  ) -> Result<HTTPRequest, NetworkError> {
     encode(variable)
   }
 }
@@ -25,16 +25,18 @@ public extension NetworkRequestEncoding where Variable: Encodable {
     method: HTTPMethod = .post,
     headers: HTTPHeaders = [:]
   ) -> Self {
-    Self { variables in
+    Self { variable in
       Result {
         HTTPRequest(
           url: url,
           method: method,
           headers: headers,
-          body: try .json(from: variables)
+          body: try .json(from: variable)
         )
       }
-      .mapError(Failure.fromRequestEncodingFailure)
+      .mapError {
+        .requestEncodingFailure(reason: $0, extensions: [.requestVariables: variable])
+      }
     }
   }
 }
@@ -47,7 +49,11 @@ public extension NetworkRequestEncoding {
   
   static func template(_ template: NetworkRequestTemplate<Variable>) -> Self {
     Self { variable in
-      template.request(with: variable).mapError(Failure.fromRequestEncodingFailure)
+      template
+        .request(with: variable)
+        .mapError {
+          .requestEncodingFailure(reason: $0, extensions: [.requestVariables: variable])
+        }
     }
   }
 }

@@ -1,11 +1,11 @@
 import class Foundation.JSONDecoder
 import struct Foundation.Data
 
-public struct NetworkResponseDecoding<Variable, Response, Failure: NetworkError> {
+public struct NetworkResponseDecoding<Variable, Response> {
   
-  public var decode: (HTTPResponse, Variable) -> Result<Response, Failure>
+  public var decode: (HTTPResponse, Variable) -> Result<Response, NetworkError>
   
-  public init(decode: @escaping (HTTPResponse, Variable) -> Result<Response, Failure>) {
+  public init(decode: @escaping (HTTPResponse, Variable) -> Result<Response, NetworkError>) {
     self.decode = decode
   }
 }
@@ -15,7 +15,7 @@ public extension NetworkResponseDecoding {
   func callAsFunction(
     from response: HTTPResponse,
     with variable: Variable
-  ) -> Result<Response, Failure> {
+  ) -> Result<Response, NetworkError> {
     decode(response, variable)
   }
 }
@@ -25,7 +25,7 @@ public extension NetworkResponseDecoding where Response == Void {
   static var empty: Self {
     Self { response, _ in
       guard case 200..<300 = response.statusCode
-      else { return .failure(.fromResponseDecodingFailure(reason: nil)) }
+      else { return .failure(.responseDecodingFailure(extensions: [.httpResponse: response])) }
       return .success(())
     }
   }
@@ -56,7 +56,7 @@ public extension NetworkResponseDecoding where Response == String {
   ) -> Self {
     Self { response, _ in
       guard let string = String(data: response.body.rawValue, encoding: encoding)
-      else { return .failure(.fromResponseDecodingFailure(reason: nil)) }
+      else { return .failure(.responseDecodingFailure(extensions: [.httpResponse: response])) }
       return .success(string)
     }
   }
@@ -70,7 +70,7 @@ public extension NetworkResponseDecoding where Response: Decodable {
       do {
         return .success(try decoder.decode(Response.self, from: response.body.rawValue))
       } catch {
-        return .failure(.fromResponseDecodingFailure(reason: error))
+        return .failure(.responseDecodingFailure(reason: error, extensions: [.httpResponse: response]))
       }
     }
   }

@@ -1,17 +1,17 @@
 /// Type describing network requests and its expected results.
-public struct NetworkRequest<Variable, Response, Fault: NetworkError> {
+public struct NetworkRequest<Variable, Response> {
   
   public var execute: (
     Variable,
     CancelationToken,
-    @escaping (Result<Response, Fault>) -> Void
+    @escaping (Result<Response, NetworkError>) -> Void
   ) -> CancelationToken
   
   public init(
     _ execute: @escaping (
       Variable,
       CancelationToken,
-      @escaping (Result<Response, Fault>) -> Void
+      @escaping (Result<Response, NetworkError>) -> Void
     ) -> CancelationToken) {
     self.execute = execute
   }
@@ -20,8 +20,8 @@ public struct NetworkRequest<Variable, Response, Fault: NetworkError> {
 public extension NetworkRequest {
   
   typealias Template = NetworkRequestTemplate<Variable>
-  typealias Encoding = NetworkRequestEncoding<Variable, Fault>
-  typealias Decoding = NetworkResponseDecoding<Variable, Response, Fault>
+  typealias Encoding = NetworkRequestEncoding<Variable>
+  typealias Decoding = NetworkResponseDecoding<Variable, Response>
 }
 
 public extension NetworkRequest {
@@ -29,7 +29,7 @@ public extension NetworkRequest {
   @discardableResult @inlinable func callAsFunction(
     _ variable: Variable,
     cancelation: CancelationToken = .manual,
-    completion: @escaping (Result<Response, Fault>) -> Void
+    completion: @escaping (Result<Response, NetworkError>) -> Void
   ) -> CancelationToken {
     execute(variable, cancelation, completion)
   }
@@ -39,7 +39,7 @@ public extension NetworkRequest where Variable == Void {
   
   @discardableResult @inlinable func callAsFunction(
     cancelation: CancelationToken = .manual,
-    completion: @escaping (Result<Response, Fault>) -> Void
+    completion: @escaping (Result<Response, NetworkError>) -> Void
   ) -> CancelationToken {
     execute(Void(), cancelation, completion)
   }
@@ -55,7 +55,7 @@ public extension NetworkRequest {
     Self { variable, cancelation, completion in
       guard !cancelation.isCanceled
       else {
-        completion(.failure(.canceled))
+        completion(.failure(.canceled()))
         return cancelation
       }
       switch encoding(variable) {
@@ -63,9 +63,15 @@ public extension NetworkRequest {
         return session.requestExecutor(execute: httpRequest, cancelation: cancelation) { result in
           switch result {
           case let .success(httpResponse):
-            completion(decoding(from: httpResponse, with: variable))
+            completion(
+              decoding(
+                from: httpResponse,
+                with: variable
+              )
+              .mapError { $0.with(extensions: [.httpRequest: httpRequest]) }
+            )
           case let .failure(error):
-            completion(.failure(.fromHTTPError(error)))
+            completion(.failure(.httpError(error, extensions: [.httpRequest: httpRequest])))
           }
         }
       case let .failure(error):
