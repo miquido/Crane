@@ -34,8 +34,12 @@ public extension NetworkRequestEncoding where Variable: Encodable {
           body: try .json(from: variable)
         )
       }
-      .mapError {
-        .requestEncodingFailure(reason: $0, extensions: [.requestVariables: variable])
+      .mapError { error in
+        if let networkError = error as? NetworkError {
+          return networkError
+        } else {
+          return .requestEncodingFailure(reason: error, extensions: [.requestVariables: variable])
+        }
       }
     }
   }
@@ -46,13 +50,21 @@ public extension NetworkRequestEncoding {
   static func template(_ modifiers: HTTPRequestModifier<Variable>...) -> Self {
     template(NetworkRequestTemplate(modifiers))
   }
+  // to decide which version is better, there is probably no need for both array and varargs
+  static func template(_ modifiers: Array<HTTPRequestModifier<Variable>>) -> Self {
+    template(NetworkRequestTemplate(modifiers))
+  }
   
   static func template(_ template: NetworkRequestTemplate<Variable>) -> Self {
     Self { variable in
       template
         .request(with: variable)
-        .mapError {
-          .requestEncodingFailure(reason: $0, extensions: [.requestVariables: variable])
+        .mapError { error in
+          if let networkError = error as? NetworkError {
+            return networkError
+          } else {
+            return .requestEncodingFailure(reason: error, extensions: [.requestVariables: variable])
+          }
         }
     }
   }

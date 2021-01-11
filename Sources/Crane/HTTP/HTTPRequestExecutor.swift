@@ -28,7 +28,6 @@ public extension HTTPRequestExecutor {
   }
 }
 
-//import Foundation
 // TODO: prepare custom executor based on Network framework
 public extension HTTPRequestExecutor {
   /// HTTPRequestExecutor implementation using Foundation URLRequest and URLSession.
@@ -67,14 +66,10 @@ public extension HTTPRequestExecutor {
           case NSURLErrorTimedOut:
             completion(.failure(.timeout))
           case _: // TODO: fill with more known errors
-            withExtendedLifetime(error) { // temporary workaround for some ARC issues
-              completion(.failure(.other(error)))
-            }
+            completion(.failure(.other(error)))
           }
         } else if let response = response.flatMap({ HTTPResponse(from: $0, body: data) }) {
-//          withExtendedLifetime(response) { // temporary workaround for some ARC issues
-            completion(.success(response))
-//          }
+          completion(.success(response))
         } else {
           completion(.failure(.invalidResponse))
         }
@@ -111,6 +106,19 @@ public extension HTTPRequestExecutor {
         completion(.failure(.other(error)))
         return .canceled
       }
+    }
+  }
+  
+  func withResponseReader(_ reader: @escaping (Result<HTTPResponse, HTTPError>) -> Void) -> Self {
+    Self { request, cancelation, completion in
+      self(
+        execute: request,
+        cancelation: cancelation,
+        completion: { result in
+          reader(result)
+          completion(result)
+        }
+      )
     }
   }
 }

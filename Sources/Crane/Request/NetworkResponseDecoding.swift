@@ -18,6 +18,15 @@ public extension NetworkResponseDecoding {
   ) -> Result<Response, NetworkError> {
     decode(response, variable)
   }
+  
+  func withFallback(_ decoding: NetworkResponseDecoding) -> Self {
+    Self { response, variable in
+      self.decode(response, variable)
+        .flatMapError { _ in
+          decoding.decode(response, variable)
+        }
+    }
+  }
 }
 
 public extension NetworkResponseDecoding where Response == Void {

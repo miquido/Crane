@@ -2,7 +2,7 @@ import struct Foundation.UUID
 
 public extension NetworkRequest {
   
-  func withLogs(_ logger: @escaping (String) -> Void) -> Self {
+  func withLogs(_ logger: @escaping (String) -> Void = { print($0) }) -> Self {
     Self { arguments, cancelation, completion in
       let trackingID = UUID()
       logger("[\(trackingID)] Executing request \(Self.self) with \(arguments)")
