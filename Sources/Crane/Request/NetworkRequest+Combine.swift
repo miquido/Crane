@@ -25,7 +25,7 @@ extension NetworkRequest {
     }
     
     internal func request(_ demand: Subscribers.Demand) {
-      guard !cancelation.isCanceled
+      guard !cancelation.isCanceled, demand != .none
       else {
         _ = self.target.receive(.failure(.canceled()))
         return self.target.receive(completion: .finished)

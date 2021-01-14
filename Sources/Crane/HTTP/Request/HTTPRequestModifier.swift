@@ -50,6 +50,68 @@ public extension HTTPRequestModifier {
       return request
     })
   }
+  
+  static func combined(
+    _ modifiers: Self...
+  ) -> Self {
+    Self({ request, variable in
+      var request = request
+      for modifier in modifiers {
+        request = try modifier.modifier(request, variable)
+      }
+      return request
+    })
+  }
+  
+  static func when(
+    _ condition: @autoclosure () -> Bool,
+    then: () -> Self,
+    else: () -> Self
+  ) -> Self {
+    switch condition() {
+    case true:
+      return then()
+    case false:
+      return `else`()
+    }
+  }
+  
+  static func when(
+    _ condition: @autoclosure () -> Bool,
+    then: () -> Self
+  ) -> Self {
+    switch condition() {
+    case true:
+      return then()
+    case false:
+      return .empty
+    }
+  }
+  
+  static func with<T>(
+    _ optional: @autoclosure () -> T?,
+    then: (T) -> Self,
+    else: () -> Self
+  ) -> Self {
+    switch optional() {
+    case let .some(value):
+      return then(value)
+    case .none:
+      return `else`()
+    }
+  }
+  
+  static func with<T>(
+    _ optional: @autoclosure () -> T?,
+    then: (T)  -> Self
+  ) -> Self {
+    switch optional() {
+    case let .some(value):
+      return then(value)
+    case .none:
+      return .empty
+    }
+  }
 }
 
 public extension HTTPRequestModifier {
